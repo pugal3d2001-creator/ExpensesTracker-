@@ -1,1 +1,17 @@
+{
+  "name": "My Expense Tracker App",
+  "short_name": "Expense Tracker",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f5f6fa",
+  "theme_color": "#222222",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://flaticon.com",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
 
