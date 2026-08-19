@@ -1,1 +1,122 @@
-Index.html
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Expense Tracker</title>
+<!-- PWA Manifest Link -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#222222">
+<style>
+body{font-family:Arial,sans-serif;background:#f5f6fa;margin:0;padding:16px;color:#222}
+.container{max-width:700px;margin:auto}
+h1{text-align:center;margin:8px 0 18px}
+.card{background:white;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px #0001}
+label{display:block;font-weight:bold;margin:9px 0 5px}
+input,select,button{width:100%;box-sizing:border-box;padding:11px;border:1px solid #ccc;border-radius:9px;font-size:15px}
+button{background:#222;color:white;border:0;margin-top:12px;font-weight:bold;cursor:pointer}
+.summary{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.box{background:#f0f1f5;padding:13px;border-radius:10px;text-align:center}
+.big{font-size:22px;font-weight:bold;margin-top:5px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px 5px;border-bottom:1px solid #eee;text-align:left}
+.delete{background:#c62828;padding:6px 12px !important;width:auto !important;margin:0;font-size:12px;border-radius:6px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>💰 My Expense Tracker</h1>
+
+<div class="card">
+<h3>Add Expense</h3>
+<label>Date</label>
+<input id="date" type="date">
+<div class="row">
+<div>
+<label>Category</label>
+<select id="category">
+<option>Travel</option><option>Food</option><option>Groceries</option>
+<option>Education</option><option>Mobile / Recharge</option><option>Shopping</option>
+<option>Medical</option><option>Entertainment</option><option>Home</option><option>Other</option>
+</select>
+</div>
+<div>
+<label>Expense</label>
+<input id="expense" placeholder="Train / Bus / Fruits / Snacks">
+</div>
+</div>
+<label>Details</label>
+<input id="details" placeholder="Kumbakonam → Thanjavur">
+<label>Amount (₹)</label>
+<input id="amount" type="number" min="0" step="0.01" placeholder="10">
+<button onclick="addExpense()">➕ Add Expense</button>
+</div>
+
+<div class="card">
+<h3>📊 Monthly Summary</h3>
+<label>Select Month</label>
+<input id="month" type="month" onchange="render()">
+<div class="summary">
+<div class="box">Monthly Total<div class="big" id="total">₹0</div></div>
+<div class="box">Entries<div class="big" id="count">0</div></div>
+</div>
+<div id="categories" style="margin-top:12px"></div>
+</div>
+
+<div class="card">
+<h3>🗒️ Expense Entries</h3>
+<div style="overflow-x:auto">
+<table>
+<thead><tr><th>Date</th><th>Expense</th><th>Category</th><th>Amount</th><th></th></tr></thead>
+<tbody id="list"></tbody>
+</table>
+</div>
+</div>
+</div>
+
+<script>
+const KEY='my_expenses_v1';
+let data=JSON.parse(localStorage.getItem(KEY)||'[]');
+const today=new Date();
+const offset = today.getTimezoneOffset() * 60000;
+const localISOTime = (new Date(today - offset)).toISOString();
+document.getElementById('date').value=localISOTime.slice(0,10);
+document.getElementById('month').value=localISOTime.slice(0,7);
+
+function save(){localStorage.setItem(KEY,JSON.stringify(data));}
+function addExpense(){
+ const date=document.getElementById('date').value;
+ const category=document.getElementById('category').value;
+ const expense=document.getElementById('expense').value.trim();
+ const details=document.getElementById('details').value.trim();
+ const amount=Number(document.getElementById('amount').value);
+ if(!date||!expense||!amount||amount<0){alert('Date, Expense and Amount enter pannunga.');return;}
+ data.push({id:Date.now(),date,category,expense,details,amount});
+ save(); document.getElementById('expense').value=''; document.getElementById('details').value=''; document.getElementById('amount').value='';
+ render();
+}
+function del(id){if(confirm('இந்த expense-ஐ delete செய்யவா?')){data=data.filter(x=>x.id!==id);save();render();}}
+function render(){
+ const m=document.getElementById('month').value;
+ const arr=data.filter(x=>x.date.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+ const total=arr.reduce((s,x)=>s+x.amount,0);
+ document.getElementById('total').textContent='₹'+total.toFixed(2);
+ document.getElementById('count').textContent=arr.length;
+ const cats={}; arr.forEach(x=>cats[x.category]=(cats[x.category]||0)+x.amount);
+ document.getElementById('categories').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee"><span>${k}</span><b>₹${v.toFixed(2)}</b></div>`).join('')||'<div>No expenses this month.</div>';
+ document.getElementById('list').innerHTML=arr.map(x=>`<tr><td>${x.date}</td><td><b>${x.expense}</b><br><small>${x.details||''}</small></td><td>${x.category}</td><td>₹${x.amount.toFixed(2)}</td><td><button class="delete" onclick="del(${x.id})">Delete</button></td></tr>`).join('')||'<tr><td colspan="5">No entries</td></tr>';
+}
+render();
+
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log('Service Worker Registered'))
+    .catch(err => console.log('SW Registration Failed', err));
+}
+</script>
+</body>
+</html>
+
