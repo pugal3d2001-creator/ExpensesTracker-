@@ -21,6 +21,7 @@ button{background:#222;color:white;border:0;margin-top:12px;font-weight:bold;cur
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:9px 5px;border-bottom:1px solid #eee;text-align:left}
 .delete{background:#c62828;padding:6px 12px !important;width:auto !important;margin:0;font-size:12px;border-radius:6px}
+.export-btn{background:#1b5e20;color:white;margin-top:15px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:500px){.row{grid-template-columns:1fr}}
 </style>
@@ -73,6 +74,8 @@ th,td{padding:9px 5px;border-bottom:1px solid #eee;text-align:left}
 <tbody id="list"></tbody>
 </table>
 </div>
+<!-- New Export Button -->
+<button class="export-btn" onclick="exportToCSV()">📥 Export to Excel (CSV)</button>
 </div>
 </div>
 
@@ -108,6 +111,25 @@ function render(){
  document.getElementById('categories').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee"><span>${k}</span><b>₹${v.toFixed(2)}</b></div>`).join('')||'<div>No expenses this month.</div>';
  document.getElementById('list').innerHTML=arr.map(x=>`<tr><td>${x.date}</td><td><b>${x.expense}</b><br><small>${x.details||''}</small></td><td>${x.category}</td><td>₹${x.amount.toFixed(2)}</td><td><button class="delete" onclick="del(${x.id})">Delete</button></td></tr>`).join('')||'<tr><td colspan="5">No entries</td></tr>';
 }
+
+// Function to download data as CSV
+function exportToCSV() {
+ if(data.length === 0) { alert('No entries found to export!'); return; }
+ let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+ csvContent += "Date,Category,Expense,Details,Amount (INR)\n";
+ data.forEach(x => {
+   let row = `"${x.date}","${x.category}","${x.expense}","${x.details || ''}","${x.amount}"`;
+   csvContent += row + "\n";
+ });
+ const encodedUri = encodeURI(csvContent);
+ const link = document.createElement("a");
+ link.setAttribute("href", encodedUri);
+ link.setAttribute("download", "my_expenses_backup.csv");
+ document.body.appendChild(link);
+ link.click();
+ document.body.removeChild(link);
+}
+
 render();
 
 // Register Service Worker for PWA
@@ -119,4 +141,3 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
-
